@@ -30,11 +30,16 @@ class VirtuosoNet(nn.Module):
     def __init__(self):
         super(VirtuosoNet, self).__init__()
 
-    def encode_style(self, x, y, edges, note_locations, num_samples=10):
+    def encode_style(self, x, y, edges, note_locations, num_samples=10, return_z=True):
         score_embedding = self.score_encoder(x, edges, note_locations)
-        performance_embedding = self.performance_encoder(score_embedding, y, edges, note_locations, return_z=True, num_samples=num_samples)
+        if return_z:
+            performance_embedding = self.performance_encoder(score_embedding, y, edges, note_locations, return_z=return_z, num_samples=num_samples)
+            return performance_embedding
+        else:
+            z, mu, var = self.performance_encoder(score_embedding, y, edges, note_locations, return_z=return_z, num_samples=num_samples)
+            return z, mu ,var
 
-        return performance_embedding
+
 
     def encode_style_distribution(self, x, y, edges, note_locations):
         score_embedding = self.score_encoder(x, edges, note_locations)
