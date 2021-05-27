@@ -24,6 +24,7 @@ import style_analysis
 
 sys.modules['xml_matching'] = xml_matching
 
+<<<<<<< HEAD:src/virtuoso/legacy/model_run.py
 
 # TODO: move xml_matching.
 def should_be_moved():
@@ -32,6 +33,39 @@ def should_be_moved():
 xml_matching.read_score_perform_pair = should_be_moved
 
 #>>>>>>>>>>>>>>>> to parser
+=======
+parser = argparse.ArgumentParser()
+parser.add_argument("-mode", "--sessMode", type=str, default='test', help="train or test or testAll")
+parser.add_argument("-path", "--testPath", type=str, default="./test_pieces/bps_5_1/", help="folder path of test mat")
+parser.add_argument("-data", "--dataName", type=str, default="training_data", help="dat file name")
+parser.add_argument("--resume", type=str, default="_best.pth.tar", help="best model path")
+parser.add_argument("-tempo", "--startTempo", type=int, default=0, help="start tempo. zero to use xml first tempo")
+parser.add_argument("-trill", "--trainTrill", default=False, type=lambda x: (str(x).lower() == 'true'), help="train trill")
+parser.add_argument("-slur", "--slurEdge", default=False, type=lambda x: (str(x).lower() == 'true'), help="slur edge in graph")
+parser.add_argument("-voice", "--voiceEdge", default=True, type=lambda x: (str(x).lower() == 'true'), help="network in voice level")
+parser.add_argument("-vel", "--velocity", type=str, default='50,65', help="mean velocity of piano and forte")
+parser.add_argument("-dev", "--device", type=int, default=1, help="cuda device number")
+parser.add_argument("-code", "--modelCode", type=str, default='isgn', help="code name for saving the model")
+parser.add_argument("-tCode", "--trillCode", type=str, default='trill_default', help="code name for loading trill model")
+parser.add_argument("-comp", "--composer", type=str, default='Beethoven', help="composer name of the input piece")
+parser.add_argument("--latent", type=float, default=0, help='initial_z value')
+parser.add_argument("-bp", "--boolPedal", default=False, type=lambda x: (str(x).lower() == 'true'), help='make pedal value zero under threshold')
+parser.add_argument("-loss", "--trainingLoss", type=str, default='MSE', help='type of training loss')
+parser.add_argument("-reTrain", "--resumeTraining", default=False, type=lambda x: (str(x).lower() == 'true'), help='resume training after loading model')
+parser.add_argument("-perf", "--perfName", default='Anger_sub1', type=str, help='resume training after loading model')
+parser.add_argument("-delta", "--deltaLoss", default=False, type=lambda x: (str(x).lower() == 'true'), help="network in voice level")
+parser.add_argument("-hCode", "--hierCode", type=str, default='han_ar_measure', help="code name for loading hierarchy model")
+parser.add_argument("-intermd", "--intermediateLoss", default=True, type=lambda x: (str(x).lower() == 'true'), help="intermediate loss in ISGN")
+parser.add_argument("-randtr", "--randomTrain", default=True, type=lambda x: (str(x).lower() == 'true'), help="use random train")
+parser.add_argument("-dskl", "--disklavier", default=True, type=lambda x: (str(x).lower() == 'true'), help="save midi for disklavier")
+parser.add_argument("-multi", "--multi_instruments", default=False, type=lambda x: (str(x).lower() == 'true'), help="save midi for disklavier")
+
+
+random.seed(0)
+
+
+args = parser.parse_args()
+>>>>>>> 4f61742cd5b5997f9bc95901fa9405f9b54596ce:model_run.py
 LOSS_TYPE = args.trainingLoss
 HIERARCHY = False
 IN_HIER = False
@@ -57,6 +91,7 @@ TRILL = True
 
 ### parameters
 learning_rate = 0.0003
+<<<<<<< HEAD:src/virtuoso/legacy/model_run.py
 TIME_STEPS = 200
 VALID_STEPS = 10000
 DELTA_WEIGHT = 1
@@ -73,6 +108,18 @@ batch_size = 1
 #>>>>>>>>>>>>>>>> to parser.get_name
 
 print('Learning Rate: {}, Time_steps: {}, Delta weight: {}, Weight decay: {}, Grad clip: {}, KLD max: {}, KLD sig step: {}'.format
+=======
+TIME_STEPS = 500
+VALID_STEPS = 5000
+DELTA_WEIGHT = 2
+NUM_UPDATED = 0
+WEIGHT_DECAY = 1e-5
+GRAD_CLIP = 5
+KLD_MAX = 0.01
+KLD_SIG = 20e4
+if args.sessMode == 'train':
+    print('Learning Rate: {}, Time_steps: {}, Delta weight: {}, Weight decay: {}, Grad clip: {}, KLD max: {}, KLD sig step: {}'.format
+>>>>>>> 4f61742cd5b5997f9bc95901fa9405f9b54596ce:model_run.py
     (learning_rate, TIME_STEPS, DELTA_WEIGHT, WEIGHT_DECAY, GRAD_CLIP, KLD_MAX, KLD_SIG))
 num_epochs = 100
 num_key_augmentation = 1
@@ -339,6 +386,7 @@ elif LOSS_TYPE == 'CE':
 
 return prediction
 
+<<<<<<< HEAD:src/virtuoso/legacy/model_run.py
 def load_file_and_generate_performance(path_name, composer=args.composer, z=args.latent, start_tempo=args.startTempo, return_features=False):
 warnings.warn('moved to inference.py', DeprecationWarning)
 vel_pair = (int(args.velocity.split(',')[0]), int(args.velocity.split(',')[1]))
@@ -364,6 +412,23 @@ if IN_HIER:
     if type(initial_z) is list:
         hier_z = initial_z[0]
         final_z = initial_z[1]
+=======
+def load_file_and_generate_performance(path_name, composer=args.composer, z=args.latent, 
+                                        start_tempo=args.startTempo, return_features=False, multi_instruments=args.multi_instruments):
+    vel_pair = (int(args.velocity.split(',')[0]), int(args.velocity.split(',')[1]))
+    test_x, xml_notes, xml_doc, edges, note_locations, part_names = xml_matching.read_xml_to_array(path_name, MEANS, STDS,
+                                                                                       start_tempo, composer,
+                                                                                       vel_pair)
+    batch_x = torch.Tensor(test_x)
+    num_notes = len(test_x)
+    input_y = torch.zeros(1, num_notes, NUM_OUTPUT).to(DEVICE)
+
+    if type(z) is dict:
+        initial_z = z['z']
+        qpm_change = z['qpm']
+        z = z['key']
+        batch_x[:,QPM_PRIMO_IDX] = batch_x[:,QPM_PRIMO_IDX] + qpm_change
+>>>>>>> 4f61742cd5b5997f9bc95901fa9405f9b54596ce:model_run.py
     else:
         # hier_z = [z] * HIER_MODEL_PARAM.encoder.size
         hier_z = 'zero'
@@ -396,6 +461,7 @@ output_features = xml_matching.add_note_location_to_features(output_features, no
 if return_features:
     return output_features
 
+<<<<<<< HEAD:src/virtuoso/legacy/model_run.py
 output_xml = xml_matching.apply_tempo_perform_features(xml_doc, xml_notes, output_features, start_time=1,
                                                         predicted=True)
 output_midi, midi_pedals = xml_matching.xml_notes_to_midi(output_xml)
@@ -405,6 +471,17 @@ save_name = 'test_result/' + piece_name[-2] + '_by_' + args.modelCode + '_z' + s
 perf_worm.plot_performance_worm(output_features, save_name + '.png')
 xml_matching.save_midi_notes_as_piano_midi(output_midi, midi_pedals, save_name + '.mid',
                                             bool_pedal=args.boolPedal, disklavier=args.disklavier)
+=======
+    output_xml = xml_matching.apply_tempo_perform_features(xml_doc, xml_notes, output_features, start_time=1,
+                                                           predicted=True)
+    output_midi, midi_pedals = xml_matching.xml_notes_to_midi(output_xml, multi_instruments)
+    piece_name = path_name.split('/')
+    save_name = 'test_result/' + piece_name[-2] + '_by_' + args.modelCode + '_z' + str(z)
+
+    perf_worm.plot_performance_worm(output_features, save_name + '.png')
+    xml_matching.save_midi_notes_as_piano_midi(output_midi, midi_pedals, save_name + '.mid', part_names=part_names,
+                                               bool_pedal=args.boolPedal, disklavier=args.disklavier)
+>>>>>>> 4f61742cd5b5997f9bc95901fa9405f9b54596ce:model_run.py
 
 
 def load_file_and_encode_style(path, perf_name, composer_name):
@@ -557,6 +634,7 @@ return perform_z_by_emotion
 
 
 def run_model_in_steps(input, input_y, edges, note_locations, initial_z=False, model=MODEL):
+<<<<<<< HEAD:src/virtuoso/legacy/model_run.py
 warnings.warn('moved to utils.py', DeprecationWarning)
 num_notes = input.shape[1]
 with th.no_grad():  # no need to track history in validation
@@ -567,13 +645,25 @@ with th.no_grad():  # no need to track history in validation
     slice_indexes = dp.make_slicing_indexes_by_measure(num_notes, measure_numbers, steps=VALID_STEPS, overlap=False)
         if edges is not None:
             edges = edges.to(DEVICE)
+=======
+    num_notes = input.shape[1]
+    with torch.no_grad():  # no need to track history in validation
+        model_eval = model.eval()
+        total_output = []
+        total_z = []
+        measure_numbers = [x.measure for x in note_locations]
+        slice_indexes = dp.make_slicing_indexes_by_measure(num_notes, measure_numbers, steps=VALID_STEPS, overlap=False)
+        # if edges is not None:
+        #     edges = edges.to(DEVICE)
+>>>>>>> 4f61742cd5b5997f9bc95901fa9405f9b54596ce:model_run.py
 
         for slice_idx in slice_indexes:
             batch_start, batch_end = slice_idx
             if edges is not None:
-                batch_graph = edges[:, batch_start:batch_end, batch_start:batch_end]
+                batch_graph = edges[:, batch_start:batch_end, batch_start:batch_end].to(DEVICE)
             else:
                 batch_graph = None
+            
             batch_input = input[:, batch_start:batch_end, :].view(1,-1,model.input_size)
             batch_input_y = input_y[:, batch_start:batch_end, :].view(1,-1,model.output_size)
             temp_outputs, perf_mu, perf_var, _ = model_eval(batch_input, batch_input_y, batch_graph,
