@@ -2,7 +2,7 @@ import torch
 from .utils import note_tempo_infos_to_beat, note_feature_to_beat_mean
 from .model_utils import span_beat_to_note_num
 from . import model_constants as const
-from .pyScoreParser.feature_utils import make_index_continuous
+from pyScoreParser.feature_utils import make_index_continuous
 
 class LossCalculator:
     def __init__(self, criterion, args, logger):

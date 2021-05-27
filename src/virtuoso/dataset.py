@@ -1,5 +1,5 @@
 from .model_utils import make_higher_node
-from .pyScoreParser.data_class import DataSet
+from pyScoreParser.data_class import DataSet
 import numpy as np
 import torch
 import pickle

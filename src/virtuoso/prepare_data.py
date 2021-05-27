@@ -1,5 +1,5 @@
-from virtuoso.pyScoreParser import feature_extraction
-from .pyScoreParser import data_for_training as dft, data_class
+from pyScoreParser import feature_extraction
+from pyScoreParser import data_for_training as dft, data_class
 from .utils import load_dat
 
 # dataset = data_class.YamahaDataset('/home/svcapp/userdata/chopin_cleaned/', save=False, features_only=True)
